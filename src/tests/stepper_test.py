@@ -3,15 +3,15 @@
 
 from time import sleep
 
-import ../bed
+import bigeasydriver
 
-stepper = bed.BigEasyDriver()
-stepper.enable_pin =
-stepper.MS1_pin =
-stepper.MS2_pin =
-stepper.MS3_pin =
-stepper.direction_pin =
-stepper.step_pin =
+stepper = bigeasydriver.BigEasyDriver()
+stepper.enable_pin = 5
+stepper.MS1_pin = 6
+stepper.MS2_pin = 13
+stepper.MS3_pin = 19
+stepper.direction_pin = 26
+stepper.step_pin = 16
 
 stepper.begin()
 
