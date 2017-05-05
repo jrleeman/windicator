@@ -9,6 +9,7 @@ Schmalz. For more information on the BED visit www.schmalzhaus.com/BigEasyDriver
 from math import floor
 
 import RPi.GPIO as GPIO
+from time import sleep
 
 class BigEasyDriver(object):
     r"""The Big Easy Driver.
@@ -31,7 +32,7 @@ class BigEasyDriver(object):
         # Hardware state information
         self.isenabled = True
         self.direction = 'ccw'
-        self.step_size = 'sixteenth'
+        self.step_size = 'sixteenth step'
         self.isasleep = False
         self.isinreset = False
         self.microsteps_per_step = 16
@@ -96,7 +97,8 @@ class BigEasyDriver(object):
 
         Options: full step, half step, quarter step, eigth step, sixteenth step
         """
-        microstep_pins = [self.MS1, self.MS2, self.MS3]
+        self.step_size = step_size
+        microstep_pins = [self.MS1_pin, self.MS2_pin, self.MS3_pin]
 
         microstep_pin_states = {'full step': [GPIO.LOW, GPIO.LOW, GPIO.LOW],
                                 'half step': [GPIO.HIGH, GPIO.LOW, GPIO.LOW],
@@ -104,7 +106,7 @@ class BigEasyDriver(object):
                                 'eigth step': [GPIO.HIGH, GPIO.HIGH, GPIO.LOW],
                                 'sixteenth step': [GPIO.HIGH, GPIO.HIGH, GPIO.HIGH]}
 
-        microsteps_per_step = {'full step': 1, 'half step': 2, 'quarter_step':4,
+        microsteps_per_step = {'full step': 1, 'half step': 2, 'quarter step':4,
                                'eigth step': 8, 'sixteenth step':16}
 
         try:
@@ -148,7 +150,9 @@ class BigEasyDriver(object):
         least 1us high and 1us low.
         """
         GPIO.output(self.step_pin, GPIO.LOW)
+        sleep(3e-3)
         GPIO.output(self.step_pin, GPIO.HIGH)
+        sleep(3e-3)
         return True
 
 
@@ -160,7 +164,7 @@ class BigEasyDriver(object):
         least 1us high and 1us low.
         """
         for i in range(nsteps):
-            self.step
+            self.step()
         return True
 
     def move_degrees(self, degrees, dynamic_stepsize=False):
@@ -171,34 +175,53 @@ class BigEasyDriver(object):
         """
         if dynamic_stepsize:
             total_degrees_moved = 0.
+            initial_stepsize = self.step_size
             # Start with full steps
             self.set_stepsize('full step')
-            nsteps = floor((degrees - total_degrees_moved)/ self.degrees_per_step * self.microsteps_per_step)
-            total_degrees_moved += nsteps / self.microsteps_per_step * self.degrees_per_step
-
+            nsteps = int(floor((degrees - total_degrees_moved)/ (self.degrees_per_step / self.microsteps_per_step)))
+            print("steos: ", nsteps, self.microsteps_per_step)
+            self.move_nsteps(nsteps)
+            total_degrees_moved += nsteps * (self.degrees_per_step / self.microsteps_per_step)
+            print("moved: ", total_degrees_moved)
+            
             # Half steps
             self.set_stepsize('half step')
-            nsteps = floor((degrees - total_degrees_moved)/ self.degrees_per_step * self.microsteps_per_step)
-            total_degrees_moved += nsteps / self.microsteps_per_step * self.degrees_per_step
+            nsteps = int(floor((degrees - total_degrees_moved)/ (self.degrees_per_step / self.microsteps_per_step)))
+            self.move_nsteps(nsteps)
+            print("steos: ", nsteps, self.microsteps_per_step)
+            total_degrees_moved += nsteps * (self.degrees_per_step / self.microsteps_per_step)
+            print("moved: ", total_degrees_moved)
 
             # Quarter steps
             self.set_stepsize('quarter step')
-            nsteps = floor((degrees - total_degrees_moved)/ self.degrees_per_step * self.microsteps_per_step)
-            total_degrees_moved += nsteps / self.microsteps_per_step * self.degrees_per_step
-
+            nsteps = int(floor((degrees - total_degrees_moved)/ (self.degrees_per_step / self.microsteps_per_step)))
+            self.move_nsteps(nsteps)
+            print("steos: ", nsteps, self.microsteps_per_step)
+            total_degrees_moved += nsteps * (self.degrees_per_step / self.microsteps_per_step)
+            print("moved: ", total_degrees_moved)
+        
             # Eigth steps
             self.set_stepsize('eigth step')
-            nsteps = floor((degrees - total_degrees_moved)/ self.degrees_per_step * self.microsteps_per_step)
-            total_degrees_moved += nsteps / self.microsteps_per_step * self.degrees_per_step
-
+            nsteps = int(floor((degrees - total_degrees_moved)/ (self.degrees_per_step / self.microsteps_per_step)))
+            self.move_nsteps(nsteps)
+            print("steos: ", nsteps, self.microsteps_per_step)
+            total_degrees_moved += nsteps * (self.degrees_per_step / self.microsteps_per_step)
+            print("moved: ", total_degrees_moved)
+            
             # Sixteenth steps
             self.set_stepsize('sixteenth step')
-            nsteps = floor((degrees - total_degrees_moved)/ self.degrees_per_step * self.microsteps_per_step)
-            total_degrees_moved += nsteps / self.microsteps_per_step * self.degrees_per_step
+            nsteps = int(floor((degrees - total_degrees_moved)/ (self.degrees_per_step / self.microsteps_per_step)))
+            self.move_nsteps(nsteps)
+            print("steos: ", nsteps, self.microsteps_per_step)
+            total_degrees_moved += nsteps * (self.degrees_per_step / self.microsteps_per_step)
+            print("moved: ", total_degrees_moved)
+            
+            # Go back to the stepsize we had upon entry
+            self.set_stepsize(initial_stepsize)
 
             return total_degrees_moved
 
         else:
-            nsteps = floor(degrees / self.degrees_per_step * self.microsteps_per_step)
+            nsteps = int(floor(degrees / self.degrees_per_step * self.microsteps_per_step))
             self.move_nsteps(nsteps)
             return nsteps / self.microsteps_per_step * self.degrees_per_step
